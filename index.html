@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SourceDeck -- Operator-Grade Sourcing Infrastructure</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@300;400;600;700;800&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg:        #04040A;
+  --bg2:       #07070F;
+  --bg3:       #0A0A14;
+  --surface:   rgba(255,255,255,0.035);
+  --surface2:  rgba(255,255,255,0.065);
+  --border:    rgba(255,255,255,0.07);
+  --border2:   rgba(255,255,255,0.13);
+  --white:     #F5F5F7;
+  --sub:       #9494A4;
+  --muted:     #48485A;
+  --blue:      #0071E3;
+  --blue2:     #2997FF;
+  --blue-glow: rgba(0,113,227,0.18);
+  --green:     #30D158;
+  --gold:      #FFD60A;
+  --metal-hi:  #D6D6E0;
+  --metal-mid: #8A8A9A;
+  --metal-lo:  #3C3C4A;
+  --r:         12px;
+  --r2:        20px;
+}
+
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+html { scroll-behavior:smooth; }
+body {
+  background:var(--bg);
+  color:var(--white);
+  font-family:'Jost', sans-serif;
+  font-weight:300;
+  line-height:1.65;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+
+body::before {
+  content: '';
+  position:fixed; inset:0; z-index:0; pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  opacity:0.35;
+}
+
+.mesh { position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden; }
+.mesh-orb { position:absolute; border-radius:50%; filter:blur(130px); }
+.orb1 { width:700px; height:700px; top:-220px; left:-180px; background:radial-gradient(circle,#0071E3,transparent 70%); opacity:0.11; animation:drift1 20s ease-in-out infinite alternate; }
+.orb2 { width:500px; height:500px; bottom:-120px; right:-120px; background:radial-gradient(circle,#5E5CE6,transparent 70%); opacity:0.06; animation:drift2 25s ease-in-out infinite alternate; }
+.orb3 { width:360px; height:360px; top:45%; left:55%; background:radial-gradient(circle,#0071E3,transparent 70%); opacity:0.05; animation:drift3 32s linear infinite; }
+
+@keyframes drift1 { from { transform:translate(0,0) scale(1); } to { transform:translate(50px,35px) scale(1.08); } }
+@keyframes drift2 { from { transform:translate(0,0); } to { transform:translate(-35px,-50px); } }
+@keyframes drift3 { from { transform:translate(-50%,-50%) rotate(0deg); } to { transform:translate(-50%,-50%) rotate(360deg); } }
+@keyframes shimmer { 0%,100% { background-position:0% 50%; } 50% { background-position:100% 50%; } }
+@keyframes pulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.45; transform:scale(0.75); } }
+@keyframes fadeUp { from { opacity:0; transform:translateY(22px); } to { opacity:1; transform:translateY(0); } }
+@keyframes rowIn { from { opacity:0; transform:translateX(-8px); } to { opacity:1; transform:translateX(0); } }
+
+.wrap { position:relative; z-index:1; max-width:1080px; margin:0 auto; padding:0 32px; }
+
+/* NAV */
+nav {
+  position:fixed; top:0; left:0; right:0; z-index:100;
+  height:56px; padding:0 32px;
+  display:flex; align-items:center; justify-content:space-between;
+  background:rgba(4,4,10,0.72);
+  backdrop-filter:blur(24px) saturate(1.8);
+  -webkit-backdrop-filter:blur(24px) saturate(1.8);
+  border-bottom:1px solid var(--border);
+}
+.nav-logo {
+  font-family:'Oxanium', sans-serif; font-weight:700; font-size:15px;
+  letter-spacing:0.14em; text-transform:uppercase;
+  background:linear-gradient(135deg,var(--metal-hi) 0%,var(--blue2) 50%,var(--metal-hi) 100%);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+  background-size:200% 200%; animation:shimmer 4s ease-in-out infinite;
+}
+.nav-right { display:flex; align-items:center; gap:24px; }
+.nav-link { font-size:13px; color:var(--sub); text-decoration:none; letter-spacing:0.02em; transition:color 0.2s; }
+.nav-link:hover { color:var(--white); }
+.nav-cta {
+  font-size:13px; font-weight:500; letter-spacing:0.04em;
+  background:var(--blue); color:#fff; border-radius:980px;
+  padding:7px 18px; text-decoration:none;
+  transition:background 0.2s, box-shadow 0.2s;
+}
+.nav-cta:hover { background:var(--blue2); box-shadow:0 0 20px var(--blue-glow); }
+
+/* HERO */
+.hero {
+  min-height:100svh;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  text-align:center; padding:120px 32px 80px;
+}
+.hero-eyebrow {
+  display:inline-flex; align-items:center; gap:8px;
+  font-size:11px; font-family:'Oxanium', sans-serif; letter-spacing:0.16em;
+  text-transform:uppercase; color:var(--sub);
+  border:1px solid var(--border2); border-radius:980px;
+  padding:6px 16px; margin-bottom:44px;
+  background:var(--surface); backdrop-filter:blur(12px);
+  animation:fadeUp 0.7s ease both;
+}
+.eyebrow-dot {
+  width:6px; height:6px; border-radius:50%; background:var(--blue2);
+  box-shadow:0 0 8px var(--blue2); animation:pulse 2s ease-in-out infinite;
+}
+.hero-title {
+  font-family:'Oxanium', sans-serif;
+  font-size:clamp(42px,7.5vw,88px);
+  font-weight:800; line-height:1.0; letter-spacing:-0.025em;
+  margin-bottom:0; animation:fadeUp 0.7s 0.1s ease both;
+}
+.title-line1 {
+  display:block;
+  background:linear-gradient(180deg,#FFFFFF 0%,#9A9AAA 100%);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+}
+.title-line2 {
+  display:block;
+  background:linear-gradient(135deg,var(--blue2) 0%,var(--metal-hi) 45%,var(--blue) 100%);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+  background-size:200% 200%; animation:shimmer 5s ease-in-out infinite, fadeUp 0.7s 0.2s ease both;
+}
+.hero-sub {
+  max-width:520px; margin:36px auto 0;
+  font-size:17px; font-weight:300; color:var(--sub); line-height:1.75;
+  animation:fadeUp 0.7s 0.3s ease both;
+}
+.hero-sub strong { color:var(--metal-hi); font-weight:400; }
+.hero-actions {
+  display:flex; align-items:center; gap:14px; margin-top:48px;
+  flex-wrap:wrap; justify-content:center;
+  animation:fadeUp 0.7s 0.4s ease both;
+}
+.btn-primary {
+  display:inline-flex; align-items:center; gap:8px;
+  font-family:'Jost', sans-serif; font-size:15px; font-weight:500; letter-spacing:0.04em;
+  background:var(--blue); color:#fff; border-radius:980px;
+  padding:14px 32px; text-decoration:none; transition:all 0.25s;
+  box-shadow:0 0 0 1px rgba(0,113,227,0.4), 0 8px 32px rgba(0,113,227,0.25);
+}
+.btn-primary:hover {
+  background:var(--blue2); transform:translateY(-1px);
+  box-shadow:0 0 0 1px rgba(41,151,255,0.6), 0 12px 40px rgba(0,113,227,0.4);
+}
+.btn-secondary {
+  display:inline-flex; align-items:center; gap:8px;
+  font-family:'Jost', sans-serif; font-size:15px; font-weight:400; letter-spacing:0.04em;
+  color:var(--sub); border-radius:980px; padding:14px 28px; text-decoration:none;
+  border:1px solid var(--border2); background:var(--surface); backdrop-filter:blur(12px);
+  transition:all 0.25s;
+}
+.btn-secondary:hover { color:var(--white); border-color:rgba(255,255,255,0.2); background:var(--surface2); }
+.hero-proof {
+  margin-top:64px; font-size:12px; color:var(--muted);
+  letter-spacing:0.06em; font-family:'Oxanium', sans-serif; text-transform:uppercase;
+  animation:fadeUp 0.7s 0.5s ease both;
+}
+.proof-built { color:var(--metal-mid); margin-top:7px; font-size:11px; text-transform:none; letter-spacing:0.03em; }
+.proof-built a { color:inherit; text-decoration:none; border-bottom:1px solid var(--metal-lo); transition:color 0.2s, border-color 0.2s; }
+.proof-built a:hover { color:var(--metal-hi); border-color:var(--metal-mid); }
+
+/* STATS */
+.stats {
+  border-top:1px solid var(--border); border-bottom:1px solid var(--border);
+  background:var(--surface); backdrop-filter:blur(12px);
+}
+.stats-grid { display:grid; grid-template-columns:repeat(4,1fr); }
+.stat-item { text-align:center; padding:28px 16px; border-right:1px solid var(--border); }
+.stat-item:last-child { border-right:none; }
+.stat-val {
+  font-family:'Oxanium', sans-serif; font-size:34px; font-weight:700;
+  background:linear-gradient(135deg,var(--white),var(--metal-mid));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+}
+.stat-label { font-size:11px; color:var(--muted); margin-top:5px; letter-spacing:0.08em; text-transform:uppercase; font-family:'Oxanium', sans-serif; }
+
+/* SECTION */
+section { padding:96px 0; }
+.section-tag {
+  font-family:'Oxanium', sans-serif; font-size:11px; letter-spacing:0.18em;
+  text-transform:uppercase; color:var(--blue2); margin-bottom:14px;
+}
+.section-title {
+  font-family:'Oxanium', sans-serif; font-size:clamp(28px,3.8vw,46px);
+  font-weight:700; letter-spacing:-0.02em; line-height:1.1;
+  color:var(--white); margin-bottom:16px;
+}
+.section-sub { font-size:16px; color:var(--sub); max-width:480px; line-height:1.75; }
+
+.fade-up { opacity:0; transform:translateY(28px); transition:opacity 0.65s ease, transform 0.65s ease; }
+.fade-up.visible { opacity:1; transform:translateY(0); }
+
+/* WHO ITS FOR */
+.for-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:56px; }
+.for-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--r2); padding:36px 28px;
+  position:relative; overflow:hidden;
+  transition:border-color 0.3s, transform 0.3s;
+  backdrop-filter:blur(12px);
+}
+.for-card::before {
+  content: '';
+  position:absolute; inset:0;
+  background:linear-gradient(145deg,rgba(255,255,255,0.03) 0%,transparent 55%);
+  pointer-events:none;
+}
+.for-card:hover { border-color:var(--border2); transform:translateY(-2px); }
+.for-lane { font-family:'Oxanium', sans-serif; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; margin-bottom:14px; }
+.lane-gov { color:var(--gold); }
+.lane-ops { color:var(--blue2); }
+.lane-agency { color:var(--metal-mid); }
+.for-title { font-family:'Oxanium', sans-serif; font-size:18px; font-weight:700; color:var(--white); margin-bottom:12px; letter-spacing:-0.01em; }
+.for-desc { font-size:13px; color:var(--sub); line-height:1.7; }
+.for-bullets { margin-top:20px; display:flex; flex-direction:column; gap:8px; }
+.for-bullet { display:flex; align-items:flex-start; gap:9px; font-size:12px; color:var(--sub); line-height:1.5; }
+.fbdot { width:5px; height:5px; border-radius:50%; flex-shrink:0; margin-top:5px; }
+.fbdot-gov { background:var(--gold); box-shadow:0 0 5px var(--gold); }
+.fbdot-ops { background:var(--blue2); box-shadow:0 0 5px var(--blue2); }
+.fbdot-agency { background:var(--metal-mid); }
+
+/* HOW IT WORKS */
+.how-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:0; margin-top:60px; position:relative; }
+.how-grid::before {
+  content: '';
+  position:absolute; top:28px; left:calc(12.5% + 14px); right:calc(12.5% + 14px);
+  height:1px; background:linear-gradient(to right,transparent,var(--border2),var(--border2),transparent);
+  z-index:0;
+}
+.how-step { text-align:center; padding:0 20px; position:relative; z-index:1; }
+.step-num {
+  width:56px; height:56px; border-radius:50%; margin:0 auto 24px;
+  background:var(--bg2); border:1px solid var(--border2);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Oxanium', sans-serif; font-size:13px; font-weight:700;
+  color:var(--blue2); letter-spacing:0.06em; position:relative;
+}
+.step-num::before {
+  content: '';
+  position:absolute; inset:-1px;
+  border-radius:50%; background:linear-gradient(135deg,rgba(41,151,255,0.3),transparent);
+  z-index:-1;
+}
+.step-title { font-family:'Oxanium', sans-serif; font-size:14px; font-weight:700; color:var(--white); margin-bottom:10px; }
+.step-desc { font-size:13px; color:var(--sub); line-height:1.65; }
+
+/* FEATURES BENTO */
+.bento { display:grid; grid-template-columns:repeat(12,1fr); gap:12px; margin-top:56px; }
+.bento-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--r2); padding:32px;
+  position:relative; overflow:hidden;
+  transition:border-color 0.3s, background 0.3s, transform 0.3s;
+  backdrop-filter:blur(12px);
+}
+.bento-card::before {
+  content: '';
+  position:absolute; inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,0.03) 0%,transparent 55%);
+  pointer-events:none;
+}
+.bento-card:hover { border-color:var(--border2); background:var(--surface2); transform:translateY(-2px); }
+.bc1 { grid-column:span 7; }
+.bc2 { grid-column:span 5; }
+.bc3 { grid-column:span 5; }
+.bc4 { grid-column:span 7; }
+.bc5 { grid-column:span 12; }
+.card-icon {
+  width:42px; height:42px; border-radius:11px;
+  background:linear-gradient(135deg,var(--surface2),var(--surface));
+  border:1px solid var(--border2);
+  display:flex; align-items:center; justify-content:center;
+  margin-bottom:22px; font-size:19px;
+}
+.card-title { font-family:'Oxanium', sans-serif; font-size:18px; font-weight:700; color:var(--white); margin-bottom:10px; letter-spacing:-0.01em; }
+.card-desc { font-size:14px; color:var(--sub); line-height:1.65; }
+.source-pills { display:flex; flex-wrap:wrap; gap:7px; margin-top:22px; }
+.pill {
+  font-size:11px; font-family:'Oxanium', sans-serif; letter-spacing:0.06em;
+  padding:5px 12px; border-radius:980px; border:1px solid var(--border2);
+  color:var(--sub); background:var(--surface); transition:all 0.2s;
+}
+.pill.active { color:var(--blue2); border-color:rgba(41,151,255,0.35); background:rgba(41,151,255,0.07); }
+.pill:hover { color:var(--white); border-color:rgba(255,255,255,0.22); }
+.gate-list { margin-top:20px; display:flex; flex-direction:column; gap:9px; }
+.gate-item { display:flex; align-items:center; gap:10px; font-size:13px; color:var(--sub); }
+.gate-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+.g-green { background:var(--green); box-shadow:0 0 6px var(--green); }
+.g-blue  { background:#2997FF; box-shadow:0 0 6px #2997FF; }
+.g-gold  { background:var(--gold); box-shadow:0 0 6px var(--gold); }
+
+/* WHY NOT TOOLS */
+.objection-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:56px; }
+.obj-card {
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--r2); padding:28px 32px;
+  backdrop-filter:blur(12px); transition:border-color 0.3s;
+}
+.obj-card:hover { border-color:var(--border2); }
+.obj-versus { font-family:'Oxanium', sans-serif; font-size:10px; letter-spacing:0.14em; text-transform:uppercase; color:var(--muted); margin-bottom:10px; }
+.obj-tool { font-family:'Oxanium', sans-serif; font-size:16px; font-weight:700; color:var(--metal-mid); margin-bottom:10px; }
+.obj-problem { font-size:13px; color:var(--sub); line-height:1.65; }
+.obj-gap {
+  display:inline-block; margin-top:12px; font-size:11px; font-family:'Oxanium', sans-serif;
+  letter-spacing:0.08em; text-transform:uppercase;
+  color:var(--blue2); border:1px solid rgba(41,151,255,0.25);
+  border-radius:980px; padding:3px 11px; background:rgba(41,151,255,0.06);
+}
+.obj-full {
+  grid-column:span 2; background:linear-gradient(135deg,rgba(0,113,227,0.06),var(--surface));
+  border-color:rgba(0,113,227,0.2); padding:36px 40px;
+}
+.obj-full-title { font-family:'Oxanium', sans-serif; font-size:20px; font-weight:700; color:var(--white); margin-bottom:12px; }
+.obj-full-desc { font-size:15px; color:var(--sub); line-height:1.75; max-width:620px; }
+
+/* FEDERAL */
+.federal-block {
+  border-radius:var(--r2); border:1px solid rgba(255,214,10,0.14);
+  background:linear-gradient(135deg,rgba(255,214,10,0.04) 0%,var(--surface) 100%);
+  padding:56px 64px;
+  display:grid; grid-template-columns:1fr auto; gap:48px; align-items:center;
+  position:relative; overflow:hidden; backdrop-filter:blur(12px);
+}
+.federal-block::before {
+  content: '';
+  position:absolute; top:-80px; right:-80px;
+  width:300px; height:300px; border-radius:50%;
+  background:radial-gradient(circle,rgba(255,214,10,0.08),transparent 70%);
+  pointer-events:none;
+}
+.fed-tag {
+  display:inline-flex; align-items:center; gap:6px;
+  font-family:'Oxanium', sans-serif; font-size:10px; letter-spacing:0.16em;
+  text-transform:uppercase; color:var(--gold);
+  border:1px solid rgba(255,214,10,0.25); border-radius:980px;
+  padding:4px 12px; margin-bottom:18px; background:rgba(255,214,10,0.05);
+}
+.fed-title {
+  font-family:'Oxanium', sans-serif; font-size:clamp(22px,2.8vw,34px);
+  font-weight:700; color:var(--white); letter-spacing:-0.02em; margin-bottom:14px; line-height:1.1;
+}
+.fed-desc { font-size:15px; color:var(--sub); line-height:1.75; max-width:480px; }
+.fed-features { display:flex; flex-direction:column; gap:11px; margin-top:26px; }
+.fed-feat { display:flex; align-items:flex-start; gap:10px; font-size:13px; color:var(--sub); line-height:1.5; }
+.fed-feat-dot { width:5px; height:5px; background:var(--gold); border-radius:50%; flex-shrink:0; margin-top:5px; box-shadow:0 0 5px var(--gold); }
+.fed-cta-col { display:flex; flex-direction:column; align-items:center; gap:14px; flex-shrink:0; }
+.fed-price { text-align:center; font-family:'Oxanium', sans-serif; }
+.fed-price-val { font-size:40px; font-weight:800; color:var(--white); }
+.fed-price-per { font-size:12px; color:var(--muted); letter-spacing:0.06em; }
+.fed-price-note { font-size:11px; color:rgba(255,214,10,0.6); margin-top:4px; }
+.btn-federal {
+  display:inline-flex; align-items:center; gap:8px;
+  font-family:'Jost', sans-serif; font-size:14px; font-weight:500;
+  background:rgba(255,214,10,0.1); color:var(--gold);
+  border:1px solid rgba(255,214,10,0.3); border-radius:980px;
+  padding:12px 28px; text-decoration:none; white-space:nowrap; transition:all 0.25s;
+}
+.btn-federal:hover { background:rgba(255,214,10,0.18); border-color:rgba(255,214,10,0.5); box-shadow:0 0 24px rgba(255,214,10,0.1); }
+
+/* PROOF / MOCK UI */
+.proof-panel {
+  background:var(--bg2); border:1px solid var(--border2);
+  border-radius:var(--r2); overflow:hidden; margin-top:56px;
+  box-shadow:0 0 80px rgba(0,113,227,0.08);
+}
+.proof-titlebar {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 24px; border-bottom:1px solid var(--border);
+  background:rgba(255,255,255,0.02);
+}
+.proof-titlebar-left { display:flex; align-items:center; gap:10px; }
+.tbar-dots { display:flex; gap:6px; }
+.tbar-dot { width:10px; height:10px; border-radius:50%; }
+.tbar-dot-r { background:#FF453A; }
+.tbar-dot-y { background:#FFD60A; }
+.tbar-dot-g { background:#30D158; }
+.tbar-label { font-family:'Oxanium', sans-serif; font-size:11px; color:var(--muted); letter-spacing:0.1em; text-transform:uppercase; }
+.tbar-right { display:flex; gap:16px; }
+.tbar-stat {
+  font-family:'Oxanium', sans-serif; font-size:11px; letter-spacing:0.06em;
+  color:var(--sub); display:flex; align-items:center; gap:6px;
+}
+.tbar-num { color:var(--white); font-weight:700; }
+.proof-kpis {
+  display:grid; grid-template-columns:repeat(4,1fr);
+  border-bottom:1px solid var(--border);
+}
+.pkpi { padding:18px 24px; border-right:1px solid var(--border); }
+.pkpi:last-child { border-right:none; }
+.pkpi-val { font-family:'Oxanium', sans-serif; font-size:22px; font-weight:700; color:var(--white); }
+.pkpi-label { font-size:11px; color:var(--muted); margin-top:3px; font-family:'Oxanium', sans-serif; letter-spacing:0.06em; text-transform:uppercase; }
+.proof-table { width:100%; border-collapse:collapse; }
+.proof-table thead tr { border-bottom:1px solid var(--border); }
+.proof-table th {
+  font-family:'Oxanium', sans-serif; font-size:10px; letter-spacing:0.12em;
+  text-transform:uppercase; color:var(--muted); text-align:left;
+  padding:10px 24px; font-weight:400;
+}
+.proof-table tbody tr {
+  border-bottom:1px solid var(--border);
+  transition:background 0.15s;
+  opacity:0;
+  animation:rowIn 0.4s ease forwards;
+}
+.proof-table tbody tr:last-child { border-bottom:none; }
+.proof-table tbody tr:hover { background:rgba(255,255,255,0.02); }
+.proof-table td { padding:13px 24px; font-size:13px; color:var(--sub); vertical-align:middle; }
+.td-company { color:var(--white); font-weight:400; font-size:13px; }
+.td-source { font-family:'Oxanium', sans-serif; font-size:11px; color:var(--muted); letter-spacing:0.06em; }
+.td-score {
+  font-family:'Oxanium', sans-serif; font-size:13px; font-weight:700;
+}
+.score-hi { color:var(--green); }
+.score-mid { color:var(--gold); }
+.score-lo { color:var(--metal-mid); }
+.status-badge {
+  display:inline-flex; align-items:center; gap:5px;
+  font-family:'Oxanium', sans-serif; font-size:10px; letter-spacing:0.1em;
+  text-transform:uppercase; border-radius:980px; padding:3px 10px;
+  font-weight:700;
+}
+.badge-qualified { background:rgba(48,209,88,0.1); color:var(--green); border:1px solid rgba(48,209,88,0.25); }
+.badge-routing   { background:rgba(41,151,255,0.1); color:var(--blue2); border:1px solid rgba(41,151,255,0.25); }
+.badge-rejected  { background:rgba(255,255,255,0.04); color:var(--muted); border:1px solid var(--border); }
+.badge-pending   { background:rgba(255,214,10,0.08); color:var(--gold); border:1px solid rgba(255,214,10,0.2); }
+.badge-dot { width:5px; height:5px; border-radius:50%; background:currentColor; flex-shrink:0; }
+.proof-footer {
+  padding:12px 24px; background:rgba(255,255,255,0.015);
+  border-top:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+}
+.pf-label { font-family:'Oxanium', sans-serif; font-size:10px; color:var(--muted); letter-spacing:0.1em; text-transform:uppercase; }
+.pf-action {
+  font-family:'Oxanium', sans-serif; font-size:10px; color:var(--blue2);
+  letter-spacing:0.1em; text-transform:uppercase; cursor:pointer;
+  border:1px solid rgba(41,151,255,0.25); border-radius:980px; padding:4px 12px;
+  background:rgba(41,151,255,0.06); transition:all 0.2s;
+}
+.pf-action:hover { background:rgba(41,151,255,0.14); }
+
+/* PRICING */
+.pricing-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:56px; }
+.price-card {
+  border-radius:var(--r2); border:1px solid var(--border); padding:36px 28px;
+  background:var(--surface); backdrop-filter:blur(12px);
+  position:relative; overflow:hidden; transition:border-color 0.3s, transform 0.3s;
+}
+.price-card:hover { border-color:var(--border2); transform:translateY(-3px); }
+.price-card.featured {
+  border-color:rgba(0,113,227,0.38);
+  background:linear-gradient(160deg,rgba(0,113,227,0.07) 0%,var(--surface) 100%);
+  box-shadow:0 0 56px rgba(0,113,227,0.1);
+}
+.price-card.featured::after {
+  content:'BEST FIT FOR TEAMS';
+  position:absolute; top:18px; right:18px;
+  font-family:'Oxanium', sans-serif; font-size:8px; letter-spacing:0.14em;
+  color:var(--blue2); background:rgba(41,151,255,0.1);
+  border:1px solid rgba(41,151,255,0.24); border-radius:980px; padding:3px 10px;
+}
+.price-card.federal-card {
+  border-color:rgba(255,214,10,0.22);
+  background:linear-gradient(160deg,rgba(255,214,10,0.05) 0%,var(--surface) 100%);
+  box-shadow:0 0 56px rgba(255,214,10,0.05);
+}
+.price-card.federal-card::after {
+  content:'FLAGSHIP';
+  position:absolute; top:18px; right:18px;
+  font-family:'Oxanium', sans-serif; font-size:8px; letter-spacing:0.14em;
+  color:var(--gold); background:rgba(255,214,10,0.08);
+  border:1px solid rgba(255,214,10,0.22); border-radius:980px; padding:3px 10px;
+}
+.price-buyer {
+  font-family:'Oxanium', sans-serif; font-size:10px; letter-spacing:0.14em;
+  text-transform:uppercase; margin-bottom:16px; display:inline-flex;
+  align-items:center; gap:5px; padding:3px 10px; border-radius:980px;
+  border:1px solid var(--border2); background:var(--surface);
+}
+.buyer-solo { color:var(--metal-mid); }
+.buyer-team { color:var(--blue2); }
+.buyer-govcon { color:var(--gold); }
+.price-tier { font-family:'Oxanium', sans-serif; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); margin-bottom:10px; }
+.price-amount { font-family:'Oxanium', sans-serif; font-size:42px; font-weight:800; color:var(--white); line-height:1; margin-bottom:4px; }
+.price-amount span { font-size:18px; font-weight:400; color:var(--muted); margin-right:2px; }
+.price-period { font-size:12px; color:var(--muted); margin-bottom:20px; }
+.price-for { font-size:13px; color:var(--sub); margin-bottom:24px; line-height:1.6; font-style:italic; }
+.price-divider { height:1px; background:var(--border); margin:0 -28px 24px; }
+.price-feature { display:flex; align-items:flex-start; gap:9px; font-size:13px; color:var(--sub); margin-bottom:9px; line-height:1.5; }
+.check { color:var(--blue2); flex-shrink:0; margin-top:1px; }
+.check-gold { color:var(--gold); flex-shrink:0; margin-top:1px; }
+.price-btn {
+  display:block; text-align:center; margin-top:24px;
+  font-family:'Jost', sans-serif; font-size:14px; font-weight:500;
+  border-radius:980px; padding:12px 24px; text-decoration:none;
+  transition:all 0.25s; border:1px solid var(--border2); color:var(--sub);
+}
+.price-btn:hover { border-color:rgba(255,255,255,0.2); color:var(--white); }
+.price-card.featured .price-btn {
+  background:var(--blue); color:#fff; border-color:transparent;
+  box-shadow:0 4px 20px rgba(0,113,227,0.3);
+}
+.price-card.featured .price-btn:hover { background:var(--blue2); box-shadow:0 6px 28px rgba(0,113,227,0.44); }
+.price-card.federal-card .price-btn {
+  background:rgba(255,214,10,0.1); color:var(--gold); border-color:rgba(255,214,10,0.3);
+}
+.price-card.federal-card .price-btn:hover { background:rgba(255,214,10,0.2); box-shadow:0 0 24px rgba(255,214,10,0.12); }
+
+/* TRUST BAR */
+.trust-bar {
+  border-top:1px solid var(--border); border-bottom:1px solid var(--border);
+  background:var(--surface); backdrop-filter:blur(12px); padding:32px 0;
+}
+.trust-inner { display:flex; align-items:center; justify-content:center; gap:48px; flex-wrap:wrap; }
+.trust-item { display:flex; align-items:center; gap:10px; }
+.trust-dot { width:5px; height:5px; background:var(--green); border-radius:50%; box-shadow:0 0 6px var(--green); flex-shrink:0; }
+.trust-text { font-size:12px; color:var(--sub); font-family:'Oxanium', sans-serif; letter-spacing:0.06em; text-transform:uppercase; }
+
+/* FOOTER */
+footer { border-top:1px solid var(--border); padding:40px 0; text-align:center; }
+.footer-inner { display:flex; flex-direction:column; align-items:center; gap:14px; }
+.footer-logo {
+  font-family:'Oxanium', sans-serif; font-weight:700; font-size:17px;
+  letter-spacing:0.14em; text-transform:uppercase;
+  background:linear-gradient(135deg,var(--metal-hi),var(--blue2),var(--metal-hi));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+  background-size:200%; animation:shimmer 4s ease-in-out infinite;
+}
+.footer-powered { font-size:12px; color:var(--muted); letter-spacing:0.04em; }
+.footer-powered a { color:var(--metal-mid); text-decoration:none; border-bottom:1px solid var(--metal-lo); transition:color 0.2s, border-color 0.2s; }
+.footer-powered a:hover { color:var(--metal-hi); border-color:var(--metal-mid); }
+.footer-links { display:flex; gap:28px; font-size:12px; color:var(--muted); }
+.footer-links a { color:inherit; text-decoration:none; transition:color 0.2s; }
+.footer-links a:hover { color:var(--sub); }
+
+/* RESPONSIVE */
+@media(max-width:900px) {
+  .for-grid { grid-template-columns:1fr; }
+  .how-grid { grid-template-columns:repeat(2,1fr); gap:32px; }
+  .how-grid::before { display:none; }
+  .objection-grid { grid-template-columns:1fr; }
+  .obj-full { grid-column:span 1; }
+  .bento { grid-template-columns:1fr; }
+  .bc1,.bc2,.bc3,.bc4,.bc5 { grid-column:span 1; }
+  .bc5 { display:block !important; }
+  .bc5 > div:last-child { display:none; }
+  .pricing-grid { grid-template-columns:1fr; }
+  .stats-grid { grid-template-columns:repeat(2,1fr); }
+  .stat-item:nth-child(2) { border-right:none; }
+  .federal-block { grid-template-columns:1fr; padding:36px 28px; }
+  .fed-cta-col { align-items:flex-start; }
+  nav { padding:0 20px; }
+  .wrap { padding:0 20px; }
+  .trust-inner { gap:24px; }
+  .proof-kpis { grid-template-columns:repeat(2,1fr); }
+  .pkpi:nth-child(2) { border-right:none; }
+  .proof-table th:nth-child(3),
+  .proof-table td:nth-child(3) { display:none; }
+}
+</style>
+</head>
+<body>
+
+<div class="mesh">
+  <div class="mesh-orb orb1"></div>
+  <div class="mesh-orb orb2"></div>
+  <div class="mesh-orb orb3"></div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">SourceDeck</div>
+  <div class="nav-right">
+    <a href="#who" class="nav-link">Who It's For</a>
+    <a href="#features" class="nav-link">Features</a>
+    <a href="#federal" class="nav-link">Federal</a>
+    <a href="#pricing" class="nav-link">Pricing</a>
+    <a href="https://arcgsystems.com" class="nav-link" target="_blank">By ARCG</a>
+    <a href="#pricing" class="nav-cta">Request Early Access</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="wrap">
+    <div class="hero-eyebrow">
+      <span class="eyebrow-dot"></span>
+      Early Access -- Operator-Grade Sourcing Infrastructure
+    </div>
+    <h1 class="hero-title">
+      <span class="title-line1">Stop Chasing</span>
+      <span class="title-line2">Bad Opportunities.</span>
+    </h1>
+    <p class="hero-sub">
+      The command center for firms that cannot afford wasted pursuit.
+      <strong>Find better targets. Qualify faster. Kill bad fits before they enter your pipeline.</strong>
+      One system. Any source. No tool sprawl.
+    </p>
+    <div class="hero-actions">
+      <a href="#pricing" class="btn-primary">
+        Request Early Access
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7H12M8 3L12 7L8 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+      <a href="#federal" class="btn-secondary">See Federal Edition</a>
+    </div>
+    <div class="hero-proof">
+      BYOK -- Full Data Sovereignty &nbsp;&#183;&nbsp; Any Lead Source &nbsp;&#183;&nbsp; Local-First by Default
+      <div class="proof-built">
+        Built by <a href="https://arcgsystems.com" target="_blank">ARCG Systems</a> -- built from live production contractor workflows
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="wrap">
+    <div class="stats-grid">
+      <div class="stat-item">
+        <div class="stat-val">9-Layer</div>
+        <div class="stat-label">Qualification Gates</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-val">74%</div>
+        <div class="stat-label">Email Discovery Rate</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-val">Any</div>
+        <div class="stat-label">Source -- Plug In Yours</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-val">&lt;2 min</div>
+        <div class="stat-label">Onboarding Setup</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- WHO ITS FOR -->
+<section id="who">
+  <div class="wrap">
+    <div class="fade-up">
+      <div class="section-tag">Who It's For</div>
+      <h2 class="section-title">Built for teams where pursuit quality matters.</h2>
+      <p class="section-sub">SourceDeck is purpose-built for teams where pipeline quality directly determines revenue, win rate, and pursuit cost.</p>
+    </div>
+    <div class="for-grid">
+      <div class="for-card fade-up">
+        <div class="for-lane lane-gov">Federal / GovCon</div>
+        <div class="for-title">Government Contractors</div>
+        <div class="for-desc">You have NAICS codes, certifications, and a limited BD team. Every wasted pursuit is real money. SourceDeck qualifies opportunities before you commit a single BD hour.</div>
+        <div class="for-bullets">
+          <div class="for-bullet"><span class="fbdot fbdot-gov"></span>SAM.gov intake filtered to active solicitations only</div>
+          <div class="for-bullet"><span class="fbdot fbdot-gov"></span>NAICS-bound targeting eliminates scope drift</div>
+          <div class="for-bullet"><span class="fbdot fbdot-gov"></span>COR relationship intelligence before outreach</div>
+          <div class="for-bullet"><span class="fbdot fbdot-gov"></span>Pursuit workflow built in, not bolted on</div>
+        </div>
+      </div>
+      <div class="for-card fade-up">
+        <div class="for-lane lane-ops">Service Operators</div>
+        <div class="for-title">Targeted Outbound Teams</div>
+        <div class="for-desc">You are running direct outbound to local businesses or niche verticals. You need verified contacts -- not scraped lists that bounce and damage your sender reputation.</div>
+        <div class="for-bullets">
+          <div class="for-bullet"><span class="fbdot fbdot-ops"></span>AI-generated leads with corroboration scores</div>
+          <div class="for-bullet"><span class="fbdot fbdot-ops"></span>MX validation and inbox deliverability checks</div>
+          <div class="for-bullet"><span class="fbdot fbdot-ops"></span>Direct push to Instantly campaigns</div>
+          <div class="for-bullet"><span class="fbdot fbdot-ops"></span>Reply intelligence surfaces active buyers</div>
+        </div>
+      </div>
+      <div class="for-card fade-up">
+        <div class="for-lane lane-agency">Agencies</div>
+        <div class="for-title">Outbound Agencies and Teams</div>
+        <div class="for-desc">You are managing prospecting across multiple clients from disconnected tools. SourceDeck centralizes source management, verification, and routing under one controlled workflow.</div>
+        <div class="for-bullets">
+          <div class="for-bullet"><span class="fbdot fbdot-agency"></span>Multi-source management from one interface</div>
+          <div class="for-bullet"><span class="fbdot fbdot-agency"></span>BYOK -- your keys, your data, no vendor risk</div>
+          <div class="for-bullet"><span class="fbdot fbdot-agency"></span>Airtable or Notion sync for client delivery</div>
+          <div class="for-bullet"><span class="fbdot fbdot-agency"></span>White-label agency licensing available</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how" style="background:linear-gradient(180deg,var(--bg) 0%,var(--bg3) 50%,var(--bg) 100%);">
+  <div class="wrap">
+    <div class="fade-up" style="text-align:center;">
+      <div class="section-tag">How It Works</div>
+      <h2 class="section-title">From source to qualified target.<br/>Four steps. No manual cleanup.</h2>
+    </div>
+    <div class="how-grid">
+      <div class="how-step fade-up">
+        <div class="step-num">01</div>
+        <div class="step-title">Connect Your Sources</div>
+        <div class="step-desc">Plug in SAM.gov, SerpAPI, Apollo, or a custom endpoint. Bring your own API keys. Designed for local-first and direct BYOK workflows.</div>
+      </div>
+      <div class="how-step fade-up">
+        <div class="step-num">02</div>
+        <div class="step-title">Define Targeting Rules</div>
+        <div class="step-desc">Set geography, NAICS codes, industry, company size, and opportunity type. Rules bind the AI -- no drift into bad-fit targets.</div>
+      </div>
+      <div class="how-step fade-up">
+        <div class="step-num">03</div>
+        <div class="step-title">Verify and Score</div>
+        <div class="step-desc">9 runtime qualification gates check every target before it enters your pipeline. Bad data, hallucinated contacts, and undeliverable emails are rejected at this stage.</div>
+      </div>
+      <div class="how-step fade-up">
+        <div class="step-num">04</div>
+        <div class="step-title">Route Approved Targets</div>
+        <div class="step-desc">Qualified targets push directly to your CRM, Instantly campaign, or outreach sequence. No copy-paste. No manual export. Pipeline moves.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="wrap">
+    <div class="fade-up">
+      <div class="section-tag">Platform Capabilities</div>
+      <h2 class="section-title">Operator tools. Not SaaS theater.</h2>
+      <p class="section-sub">Every module was built from real outreach infrastructure. If it does not improve pipeline quality or reduce manual work, it is not here.</p>
+    </div>
+    <div class="bento">
+
+      <div class="bento-card bc1 fade-up">
+        <div class="card-icon">&#x26A1;</div>
+        <div class="card-title">Target Discovery</div>
+        <div class="card-desc">Specify your market -- geography, industry, size, buyer profile. GPT-4o researches and returns corroborated targets with contact data and business context. Not a list. Real decision-makers with verified pathways.</div>
+        <div class="source-pills">
+          <span class="pill active">SAM.gov</span>
+          <span class="pill active">SerpAPI</span>
+          <span class="pill active">Apollo.io</span>
+          <span class="pill">LinkedIn</span>
+          <span class="pill">Custom Endpoint</span>
+          <span class="pill">+ Add Your Source</span>
+        </div>
+      </div>
+
+      <div class="bento-card bc2 fade-up">
+        <div class="card-icon">&#x1F6E1;</div>
+        <div class="card-title">Qualification Gates</div>
+        <div class="card-desc">9 runtime checks run before any target touches your CRM. Hallucinated contacts, unverifiable businesses, and bad emails are rejected -- not flagged, rejected.</div>
+        <div class="gate-list">
+          <div class="gate-item"><div class="gate-dot g-green"></div>MX domain validation</div>
+          <div class="gate-item"><div class="gate-dot g-green"></div>Business corroboration</div>
+          <div class="gate-item"><div class="gate-dot g-blue"></div>Email domain consistency</div>
+          <div class="gate-item"><div class="gate-dot g-blue"></div>Generic inbox demotion</div>
+          <div class="gate-item"><div class="gate-dot g-gold"></div>Fictional phone detection</div>
+        </div>
+      </div>
+
+      <div class="bento-card bc3 fade-up">
+        <div class="card-icon">&#x1F4CA;</div>
+        <div class="card-title">Triage and Pipeline Control</div>
+        <div class="card-desc">Local-first by default -- no external dependency required. Optional sync to Airtable or Notion. Status tracking, follow-up enforcement, priority queuing, and lead scoring in one controlled workspace.</div>
+      </div>
+
+      <div class="bento-card bc4 fade-up">
+        <div class="card-icon">&#x1F4EC;</div>
+        <div class="card-title">Verified Pursuit Routing</div>
+        <div class="card-desc">Approved targets push directly into Instantly campaigns. AI drafts personalized outreach from target context. Reply intelligence surfaces active buyers. Your pipeline runs when you are not watching it.</div>
+      </div>
+
+      <div class="bento-card bc5 fade-up" style="display:grid; grid-template-columns:1fr 1fr; gap:32px; align-items:center;">
+        <div>
+          <div class="card-icon">&#x1F511;</div>
+          <div class="card-title">Sovereign Infrastructure -- BYOK</div>
+          <div class="card-desc">SourceDeck is not a data intermediary. Your OpenAI, Airtable, Apollo, SerpAPI, and Instantly keys are used directly in a local-first workflow. Designed for full operator control in a local-first workflow.</div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div style="background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:14px 18px; font-size:13px; color:var(--muted);">
+            <span style="color:var(--sub);">OpenAI</span> &nbsp; <span style="color:var(--metal-lo);">sk-&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;</span> &nbsp;
+            <span style="color:var(--green); font-size:11px; font-family:'Oxanium',sans-serif; letter-spacing:0.06em;">CONNECTED</span>
+          </div>
+          <div style="background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:14px 18px; font-size:13px; color:var(--muted);">
+            <span style="color:var(--sub);">Airtable</span> &nbsp; <span style="color:var(--metal-lo);">pat_&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;</span> &nbsp;
+            <span style="color:var(--green); font-size:11px; font-family:'Oxanium',sans-serif; letter-spacing:0.06em;">CONNECTED</span>
+          </div>
+          <div style="background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:14px 18px; font-size:13px; color:var(--muted);">
+            <span style="color:var(--sub);">Instantly</span> &nbsp; <span style="color:var(--metal-lo);">inst_&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;</span> &nbsp;
+            <span style="color:var(--blue2); font-size:11px; font-family:'Oxanium',sans-serif; letter-spacing:0.06em;">+ CONNECT</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- WHY NOT SEPARATE TOOLS -->
+<section id="why" style="background:var(--bg3);">
+  <div class="wrap">
+    <div class="fade-up">
+      <div class="section-tag">The Real Problem</div>
+      <h2 class="section-title">Why not just use Apollo,<br/>Airtable, and ChatGPT?</h2>
+      <p class="section-sub">Each tool does one thing -- and none of them connect. The gap between tools is where bad data, missed follow-ups, and wasted pursuit live.</p>
+    </div>
+    <div class="objection-grid">
+      <div class="obj-card fade-up">
+        <div class="obj-versus">The Problem With</div>
+        <div class="obj-tool">Apollo + SerpAPI</div>
+        <div class="obj-problem">They surface contacts. They do not qualify them. Bounced emails, chain locations, and contacts without decision-making authority all flow into your CRM unchecked.</div>
+        <span class="obj-gap">SourceDeck gates every contact before import</span>
+      </div>
+      <div class="obj-card fade-up">
+        <div class="obj-versus">The Problem With</div>
+        <div class="obj-tool">Airtable Alone</div>
+        <div class="obj-problem">Airtable stores data. It does not verify it, score it, or enforce follow-up discipline. Your base fills with stale, unqualified records that degrade every report you run.</div>
+        <span class="obj-gap">SourceDeck validates before records ever land</span>
+      </div>
+      <div class="obj-card fade-up">
+        <div class="obj-versus">The Problem With</div>
+        <div class="obj-tool">ChatGPT for Prospecting</div>
+        <div class="obj-problem">Generative AI produces plausible leads -- not verified ones. Email domains get transposed. Businesses get fabricated. Without runtime checks, you are chasing hallucinations.</div>
+        <span class="obj-gap">SourceDeck runs corroboration on every output</span>
+      </div>
+      <div class="obj-card fade-up">
+        <div class="obj-versus">The Problem With</div>
+        <div class="obj-tool">Instantly Without Qualification</div>
+        <div class="obj-problem">Sending unverified contacts burns your domain reputation. A single bad batch can destroy months of warmup. If contacts going in are not clean, the campaign cannot save you.</div>
+        <span class="obj-gap">SourceDeck approves before push, not after bounce</span>
+      </div>
+      <div class="obj-card obj-full fade-up">
+        <div class="obj-full-title">SourceDeck closes the gap between sourcing and action.</div>
+        <div class="obj-full-desc">Discovery, qualification, verification, and routing in one connected workflow. No CSV exports. No manual cleanup. No CRM pollution. The pipeline that enters SourceDeck is the pipeline that actually moves -- bad fits are rejected before they enter it.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEDERAL EDITION -->
+<section id="federal">
+  <div class="wrap">
+    <div class="fade-up" style="text-align:center; margin-bottom:0;">
+      <div class="section-tag">Federal Edition</div>
+      <h2 class="section-title">Pursuit intelligence for GovCon teams<br/>that cannot afford wasted bids.</h2>
+    </div>
+    <div class="federal-block fade-up" style="margin-top:48px;">
+      <div>
+        <div class="fed-tag">&#x2605; SourceDeck Federal</div>
+        <div class="fed-title">The only sourcing system<br/>built around SAM.gov qualification.</div>
+        <div class="fed-desc">Most BD teams lose hours on SAM.gov opportunities that were never a real fit. SourceDeck Federal automates intake, filters to active solicitations only, binds discovery to your NAICS profile, and generates procurement-safe relationship intelligence before first contact.</div>
+        <div class="fed-features">
+          <div class="fed-feat"><div class="fed-feat-dot"></div>SAM.gov intake filtered to RFQ, RFP, and Combined Synopsis -- pre-solicitation and award noise removed</div>
+          <div class="fed-feat"><div class="fed-feat-dot"></div>NAICS-bound targeting -- AI restricted to your approved codes, no scope drift</div>
+          <div class="fed-feat"><div class="fed-feat-dot"></div>COR Intelligence -- 14-section procurement-safe brief with LinkedIn analysis, outreach draft, 3-month nurture plan, and competitive context</div>
+          <div class="fed-feat"><div class="fed-feat-dot"></div>Solicitation qualification scoring -- know your fit before committing BD hours</div>
+          <div class="fed-feat"><div class="fed-feat-dot"></div>10 COR briefs included monthly -- $4 per brief overage, no surprises</div>
+          <div class="fed-feat"><div class="fed-feat-dot"></div>Built by an SDVOSB firm running this system on active contracts</div>
+        </div>
+      </div>
+      <div class="fed-cta-col">
+        <div class="fed-price">
+          <div class="fed-price-val">$197</div>
+          <div class="fed-price-per">/ MONTH</div>
+          <div class="fed-price-note">or $997 one-time lifetime</div>
+        </div>
+        <a href="#pricing" class="btn-federal">
+          See Federal Edition
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7H12M8 3L12 7L8 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+        <div style="font-size:11px; color:var(--muted); text-align:center; max-width:160px; line-height:1.6;">
+          SDVOSB &#183; HUBZone &#183; MBE &#183; DBE certified infrastructure
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROOF / MOCK UI -->
+<section id="proof" style="background:linear-gradient(180deg,var(--bg) 0%,var(--bg3) 60%,var(--bg) 100%);">
+  <div class="wrap">
+    <div class="fade-up" style="text-align:center;">
+      <div class="section-tag">See It in Action</div>
+      <h2 class="section-title">SourceDeck in action.</h2>
+      <p class="section-sub" style="margin:0 auto;">Real pipeline view. Targets surface, get scored, get qualified or rejected -- before a single outreach is sent.</p>
+    </div>
+    <div class="proof-panel fade-up" style="margin-top:48px;">
+      <div class="proof-titlebar">
+        <div class="proof-titlebar-left">
+          <div class="tbar-dots">
+            <div class="tbar-dot tbar-dot-r"></div>
+            <div class="tbar-dot tbar-dot-y"></div>
+            <div class="tbar-dot tbar-dot-g"></div>
+          </div>
+          <div class="tbar-label">SourceDeck -- Pipeline View</div>
+        </div>
+        <div class="tbar-right">
+          <div class="tbar-stat"><span class="tbar-num">14</span> total</div>
+          <div class="tbar-stat" style="color:var(--green);"><span class="tbar-num" style="color:var(--green);">9</span> qualified</div>
+          <div class="tbar-stat" style="color:#FF453A;"><span class="tbar-num" style="color:#FF453A;">3</span> rejected</div>
+          <div class="tbar-stat" style="color:var(--blue2);"><span class="tbar-num" style="color:var(--blue2);">2</span> routing</div>
+        </div>
+      </div>
+      <div class="proof-kpis">
+        <div class="pkpi">
+          <div class="pkpi-val" style="color:var(--green);">9</div>
+          <div class="pkpi-label">Qualified This Run</div>
+        </div>
+        <div class="pkpi">
+          <div class="pkpi-val">74%</div>
+          <div class="pkpi-label">Email Discovery Rate</div>
+        </div>
+        <div class="pkpi">
+          <div class="pkpi-val" style="color:#FF453A;">3</div>
+          <div class="pkpi-label">Rejected by Gates</div>
+        </div>
+        <div class="pkpi">
+          <div class="pkpi-val" style="color:var(--blue2);">2</div>
+          <div class="pkpi-label">Routing to Instantly</div>
+        </div>
+      </div>
+      <table class="proof-table">
+        <thead>
+          <tr>
+            <th>Company</th>
+            <th>Source</th>
+            <th>Score</th>
+            <th>Contact</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="animation-delay:0.05s;">
+            <td><span class="td-company">Meridian Facility Group</span></td>
+            <td><span class="td-source">SerpAPI</span></td>
+            <td><span class="td-score score-hi">94</span></td>
+            <td style="font-size:12px; color:var(--sub);">d.harris@meridianfg.com</td>
+            <td><span class="status-badge badge-routing"><span class="badge-dot"></span>Routing</span></td>
+          </tr>
+          <tr style="animation-delay:0.12s;">
+            <td><span class="td-company">Apex Staffing Solutions LLC</span></td>
+            <td><span class="td-source">Apollo.io</span></td>
+            <td><span class="td-score score-hi">91</span></td>
+            <td style="font-size:12px; color:var(--sub);">ceo@apexstaffingdc.com</td>
+            <td><span class="status-badge badge-qualified"><span class="badge-dot"></span>Qualified</span></td>
+          </tr>
+          <tr style="animation-delay:0.19s;">
+            <td><span class="td-company">BlueSky Mechanical Inc.</span></td>
+            <td><span class="td-source">SAM.gov</span></td>
+            <td><span class="td-score score-hi">88</span></td>
+            <td style="font-size:12px; color:var(--sub);">ops@blueskymech.com</td>
+            <td><span class="status-badge badge-qualified"><span class="badge-dot"></span>Qualified</span></td>
+          </tr>
+          <tr style="animation-delay:0.26s;">
+            <td><span class="td-company">Hargrove Property Services</span></td>
+            <td><span class="td-source">SerpAPI</span></td>
+            <td><span class="td-score score-mid">71</span></td>
+            <td style="font-size:12px; color:var(--sub);">info@hargroveprops.com</td>
+            <td><span class="status-badge badge-pending"><span class="badge-dot"></span>Pending</span></td>
+          </tr>
+          <tr style="animation-delay:0.33s;">
+            <td><span class="td-company">National Chain Co. (rejected)</span></td>
+            <td><span class="td-source">SerpAPI</span></td>
+            <td><span class="td-score score-lo">--</span></td>
+            <td style="font-size:12px; color:var(--muted);">Chain location filtered</td>
+            <td><span class="status-badge badge-rejected"><span class="badge-dot"></span>Rejected</span></td>
+          </tr>
+          <tr style="animation-delay:0.4s;">
+            <td><span class="td-company">Vantage Electrical Contractors</span></td>
+            <td><span class="td-source">SAM.gov</span></td>
+            <td><span class="td-score score-hi">96</span></td>
+            <td style="font-size:12px; color:var(--sub);">bvanderhorn@vantageelec.com</td>
+            <td><span class="status-badge badge-routing"><span class="badge-dot"></span>Routing</span></td>
+          </tr>
+          <tr style="animation-delay:0.47s;">
+            <td><span class="td-company">Hallmark General Services</span></td>
+            <td><span class="td-source">Apollo.io</span></td>
+            <td><span class="td-score score-mid">78</span></td>
+            <td style="font-size:12px; color:var(--sub);">contact@hallmarkgs.com</td>
+            <td><span class="status-badge badge-qualified"><span class="badge-dot"></span>Qualified</span></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="proof-footer">
+        <div class="pf-label">Showing 7 of 14 targets -- last run 4 min ago</div>
+        <div class="pf-action">Push Qualified to Instantly</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TRUST BAR -->
+<div class="trust-bar">
+  <div class="wrap">
+    <div class="trust-inner">
+      <div class="trust-item"><div class="trust-dot"></div><div class="trust-text">Built from live production workflows</div></div>
+      <div class="trust-item"><div class="trust-dot"></div><div class="trust-text">Designed for operator pain, not investor demos</div></div>
+      <div class="trust-item"><div class="trust-dot"></div><div class="trust-text">Tested against real outreach campaigns</div></div>
+      <div class="trust-item"><div class="trust-dot"></div><div class="trust-text">No vendor lock-in -- you own your data</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- PRICING -->
+<section id="pricing">
+  <div class="wrap">
+    <div class="fade-up" style="text-align:center;">
+      <div class="section-tag">Pricing</div>
+      <h2 class="section-title">Priced by operator type.<br/>Not by arbitrary feature buckets.</h2>
+      <p class="section-sub" style="margin:0 auto;">Each tier maps to a specific kind of operator. Pick the one that fits how you work.</p>
+    </div>
+    <div class="pricing-grid">
+
+      <div class="price-card fade-up">
+        <div class="price-buyer buyer-solo">Solo Operator</div>
+        <div class="price-tier">Core</div>
+        <div class="price-amount"><span>$</span>49</div>
+        <div class="price-period">one-time -- yours permanently</div>
+        <div class="price-for">Solo operators running targeted outbound from a single source with full local control.</div>
+        <div class="price-divider"></div>
+        <div class="price-feature"><span class="check">&#x2713;</span>Target Discovery -- AI-generated leads</div>
+        <div class="price-feature"><span class="check">&#x2713;</span>Local-first pipeline triage -- no Airtable required</div>
+        <div class="price-feature"><span class="check">&#x2713;</span>Qualification gates -- 9-layer verification</div>
+        <div class="price-feature"><span class="check">&#x2713;</span>Email deliverability tracker</div>
+        <div class="price-feature"><span class="check">&#x2713;</span>1 connected source</div>
+        <div class="price-feature"><span class="check">&#x2713;</span>BYOK -- OpenAI</div>
+        <a href="#" class="price-btn">Request Early Access</a>
+      </div>
+
+      <div class="price-card featured fade-up">
+        <div class="price-buyer buyer-team">Outbound Team</div>
+        <div class="price-tier">Pro</div>
+        <div class="price-amount"><span>$</span>97</div>
+        <div class="price-period">per month &nbsp;&#183;&nbsp; or $597 lifetime</div>
+        <div class="price-for">Teams running multi-source prospecting with full pipeline automation, enrichment, and outreach routing.</div>
+        <div class="price-divider"></div>
+        <div class="price-feature"><span class="check">&#x2713;</span>Everything in Core</div>
+        <div class="price-feature"><span class="check">&#x2713;</span>All sources -- SerpAPI, Apollo, custom endpoints</div>
+        <div class="price-feature"><span class="check">&#x2713;</span>Airtable + Notion sync</div>
+        <div class="price-feature"><span class="check">&#x2713;</span>Instantly campaign routing</div>
+        <div class="price-feature"><span class="check">&#x2713;</span>Reply Intelligence + AI outreach drafting</div>
+        <div class="price-feature"><span class="check">&#x2713;</span>Daily Ops + Ad Engine modules</div>
+        <a href="#" class="price-btn">Request Early Access</a>
+      </div>
+
+      <div class="price-card federal-card fade-up">
+        <div class="price-buyer buyer-govcon">GovCon Firm</div>
+        <div class="price-tier">Federal</div>
+        <div class="price-amount"><span>$</span>197</div>
+        <div class="price-period">per month &nbsp;&#183;&nbsp; or $997 lifetime</div>
+        <div class="price-for">SDVOSB, 8(a), HUBZone, and certified firms sourcing and pursuing federal contracts with less wasted pursuit.</div>
+        <div class="price-divider"></div>
+        <div class="price-feature"><span class="check-gold">&#x2713;</span>Everything in Pro</div>
+        <div class="price-feature"><span class="check-gold">&#x2713;</span>SAM.gov solicitation pipeline module</div>
+        <div class="price-feature"><span class="check-gold">&#x2713;</span>NAICS-bound targeting -- no scope drift</div>
+        <div class="price-feature"><span class="check-gold">&#x2713;</span>COR Intelligence briefs -- 10 per month</div>
+        <div class="price-feature"><span class="check-gold">&#x2713;</span>Solicitation qualification scoring</div>
+        <div class="price-feature"><span class="check-gold">&#x2713;</span>Pursuit workflow -- not a BD bolt-on</div>
+        <a href="#" class="price-btn">See Federal Edition</a>
+      </div>
+
+    </div>
+    <div style="margin-top:28px; text-align:center; font-size:13px; color:var(--muted);">
+      Agency and white-label licensing available. &nbsp;
+      <a href="https://arcgsystems.com" target="_blank" style="color:var(--metal-mid); text-decoration:none; border-bottom:1px solid var(--metal-lo);">Contact ARCG Systems</a>
+      &nbsp;for reseller terms.
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap">
+    <div class="footer-inner">
+      <div class="footer-logo">SourceDeck</div>
+      <div class="footer-powered">
+        Powered by <a href="https://arcgsystems.com" target="_blank">ARCG Systems</a>
+        &nbsp;&#183;&nbsp; SDVOSB &#183; HUBZone &#183; MBE &#183; DBE &#183; SBE &#183; Hyattsville, MD
+      </div>
+      <div class="footer-links">
+        <a href="#">Privacy</a>
+        <a href="#">Terms</a>
+        <a href="#">Agency Licensing</a>
+        <a href="https://arcgsystems.com" target="_blank">ARCG Systems</a>
+      </div>
+      <div style="font-size:11px; color:var(--muted);">&#169; 2026 ARCG Systems LLC &#183; All rights reserved</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+var obs = new IntersectionObserver(function(entries) {
+  entries.forEach(function(e) {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+      obs.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+
+document.querySelectorAll('.fade-up').forEach(function(el) { obs.observe(el); });
+
+document.querySelectorAll('.bento-card').forEach(function(card, i) {
+  card.style.transitionDelay = (i * 0.07) + 's';
+});
+
+document.querySelectorAll('.for-card').forEach(function(card, i) {
+  card.style.transitionDelay = (i * 0.1) + 's';
+});
+
+document.querySelectorAll('.how-step').forEach(function(step, i) {
+  step.style.transitionDelay = (i * 0.1) + 's';
+});
+</script>
+</body>
+</html>
