@@ -825,18 +825,34 @@ function applyLang(lang){
   if(m&&d.pageDesc) m.setAttribute('content',d.pageDesc);
   document.documentElement.lang=lang;
   const en=document.getElementById('btn-en'),es=document.getElementById('btn-es');
-  if(en) en.classList.toggle('active',lang==='en');
-  if(es) es.classList.toggle('active',lang==='es');
-  try{localStorage.setItem('sd_lang',lang);}catch(e){}
+  if(en){en.classList.toggle('active',lang==='en'); en.setAttribute('aria-pressed', lang==='en'?'true':'false');}
+  if(es){es.classList.toggle('active',lang==='es'); es.setAttribute('aria-pressed', lang==='es'?'true':'false');}
+  // Persist to both legacy key (sd_lang) and spec key (site.language).
+  try{localStorage.setItem('sd_lang',lang);localStorage.setItem('site.language',lang);}catch(e){}
 }
-function setLang(lang){applyLang(lang);}
+function setLang(lang){
+  applyLang(lang);
+  // Reflect the choice in the URL without reloading so deep-links carry it.
+  try{
+    const u=new URL(window.location.href);
+    u.searchParams.set('lang',lang);
+    window.history.replaceState({},'',u);
+  }catch(e){}
+}
 (function(){
+  // Resolve initial language: ?lang= wins, then site.language, then sd_lang
+  // (legacy), then browser language, defaulting to English.
   let lang='en';
-  try{lang=localStorage.getItem('sd_lang')||'en';}catch(e){}
-  if(!localStorage.getItem('sd_lang')){
+  try{
+    const q=(new URLSearchParams(window.location.search).get('lang')||'').toLowerCase();
+    if(q==='en'||q==='es') lang=q;
+    else lang=localStorage.getItem('site.language')||localStorage.getItem('sd_lang')||'';
+  }catch(e){}
+  if(!lang){
     const bl=(navigator.language||'en').toLowerCase();
-    if(bl.startsWith('es')) lang='es';
+    lang=bl.startsWith('es')?'es':'en';
   }
+  if(lang!=='en'&&lang!=='es') lang='en';
   applyLang(lang);
 })();
 </script>
